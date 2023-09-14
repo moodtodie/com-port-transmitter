@@ -5,79 +5,132 @@ import jssc.SerialPortException;
 import jssc.SerialPortList;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Serial {
-	private static final int BAUDRATE = SerialPort.BAUDRATE_9600;
-	private static final int DATABITS = SerialPort.DATABITS_8;
-	private static final int STOPBITS = SerialPort.STOPBITS_1;
-	private static final int PARITY = SerialPort.PARITY_NONE;
+    private static final int BAUDRATE = SerialPort.BAUDRATE_9600;
+    private static final int DATABITS = SerialPort.DATABITS_8;
+    private static int STOPBITS = SerialPort.STOPBITS_1;
+    private static final int PARITY = SerialPort.PARITY_NONE;
 
-	private final SerialPort port;
+    private SerialPort port;
 
-	public Serial(String port) {
-		this.port = new SerialPort(port);
-	}
+    public Serial(String port, int stopBits) throws SerialPortException {
+        setPort(port);
+        Serial.STOPBITS = stopBits;
+        open();
+    }
 
-	public static String[] getPortList(){
-		return SerialPortList.getPortNames();
-	}
+    public Serial(int stopBits) throws SerialPortException {
+        autoSetPort();
+        Serial.STOPBITS = stopBits;
+        open();
+    }
 
-//	public static String findPortPair(String portName){
-////		for(String port : SerialPortList.getPortNames()) {
-//		for (int i = 0; i < 2; i++) {
-//			String port = [i];
-//			System.out.println(port);
-//			if (!portName.equals(port)){
-//				try {
-//					if (new Serial(portName, port).test())
-//						return port;
-//				} catch (SerialPortException e) {
-//					throw new RuntimeException(e);
-//				}
-//			}
-//		}
-//		return null;
-//	}
+    private void open() throws SerialPortException {
+        if (port == null) {
+            autoSetPort();
+        }
 
-//	private boolean test() throws SerialPortException {
-//		char c = 3;
-//		String data = String.valueOf(c);
-//		write(port1, data);
-//		String receivedData = read(port2);
-//		return data.equals(receivedData);
-//	}
+        if (port.isOpened()) {
+            System.out.println("Error: serial port \"" + port.getPortName() + "\" is busy");
+            return;
+        }
 
-	public void write(String data) throws SerialPortException {
-		// Открываем последовательный порт
-		if (!port.isOpened())
-			port.openPort();
+        // Открываем последовательный порт
+        port.openPort();
 
-		// Устанавливаем параметры последовательного порта
-		port.setParams(BAUDRATE, DATABITS, STOPBITS, PARITY);
+        port.addEventListener(new PortListener(port), SerialPort.MASK_RXCHAR);
 
-		// Отправляем данные в последовательный порт
-		port.writeString(data);
+        System.out.println("info: " + port.getPortName() + " is open");
+    }
 
-		// Закрываем последовательный порт
-		port.closePort();
-	}
+    public void close() throws SerialPortException {
+        // Закрываем последовательный порт
+        port.closePort();
 
-	public String read() throws SerialPortException {
-		// Открываем последовательный порт
-		if (!port.isOpened())
-			port.openPort();
+        System.out.println("info: " + port.getPortName() + " is close");
+    }
 
-		// Устанавливаем параметры последовательного порта
-		port.setParams(BAUDRATE, DATABITS, STOPBITS, PARITY);
+    public void write(String data) throws SerialPortException {
+        port.setParams(BAUDRATE, DATABITS, STOPBITS, PARITY);
 
-		//	считываем данные из последовательного порта
-		byte[] buffer = port.readBytes();
+        // Отправляем данные в последовательный порт
+        port.writeBytes(data.getBytes(StandardCharsets.UTF_8));
+    }
 
-		// Закрываем последовательный порт
-		port.closePort();
+    private void autoSetPort() {
+        for (String portName : getPortList()) {
+            SerialPort serialPort = new SerialPort(portName);
+            if (!serialPort.isOpened()) {
+                setPort(serialPort.getPortName());
+                return;
+            }
+        }
+        System.exit(1);
+    }
 
-		if (buffer == null)
-			return null;
-		return new String(buffer, StandardCharsets.UTF_8);
-	}
+    public void setPort(String portName) {
+        SerialPort serialPort = new SerialPort(portName);
+        if (!serialPort.isOpened()) {
+            this.port = serialPort;
+            System.out.println("info: set serial port " + this.port.getPortName());
+            return;
+        }
+        System.out.println("Error: serial port \"" + portName + "\" is busy");
+        System.exit(1);
+    }
+
+    public static String getBaudRate() {
+        return String.valueOf(BAUDRATE);
+    }
+
+    public static void test(String name) {
+        for (String s : SerialPortList.getPortNames()) {
+            if (s.equals(name)) {
+                try {
+                    System.out.println(name + " is opened: " + new SerialPort(name).openPort());
+                } catch (SerialPortException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static String[] getPortList() {
+        List<String> nonNullStrings = new ArrayList<>();
+
+        // Перебираем массив строк
+        for (String string : SerialPortList.getPortNames()) {
+            // Если строка не равна null, добавляем ее в новый массив
+
+            if (!Serial.isOpened(string)) {
+                nonNullStrings.add(string);
+            }
+        }
+
+        // Создаем новый массив из строк, которые не равны null
+        String[] newStrings = new String[nonNullStrings.size()];
+        nonNullStrings.toArray(newStrings);
+
+        if (newStrings.length < 1) {
+            System.out.println("Error: The serial ports cannot be found.");
+            System.exit(1);
+        }
+
+        // Возвращаем новый массив
+        return newStrings;
+    }
+
+    private static boolean isOpened(String port) {
+        try {
+            SerialPort sp = new SerialPort(port);
+            sp.openPort();
+            sp.closePort();
+            return false;
+        } catch (SerialPortException e) {
+            return true;
+        }
+    }
 }
