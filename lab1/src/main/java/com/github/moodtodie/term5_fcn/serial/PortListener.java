@@ -1,34 +1,34 @@
 package com.github.moodtodie.term5_fcn.serial;
 
 import com.github.moodtodie.term5_fcn.GUI.Window;
+import jssc.SerialPort;
+import jssc.SerialPortEvent;
+import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 
-public class PortListener extends Thread {
-	private static Serial port;
-	private final Window window;
-	private volatile boolean isActive = true;
+import java.nio.charset.StandardCharsets;
 
-	public PortListener(Window window, String serialPort){
-		this.window = window;
-		port = new Serial(serialPort);
-	}
+public class PortListener implements SerialPortEventListener {
+    SerialPort port;
 
-	public static void updatePort(String serialPort){
-		port = new Serial(serialPort);
-	}
+    public PortListener(SerialPort port) {
+        this.port = port;
+    }
 
-	public void listen(){
-		while (isActive){
-			try {
-				String data = port.read();
-				window.appendOutputText(data);
-			} catch (SerialPortException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}
+    @Override
+    public void serialEvent(SerialPortEvent event) {
+        if (event.isRXCHAR() && event.getEventValue() > 0) { // data is available
+            try {
+                byte[] dataByteFormat = port.readBytes(event.getEventValue());
 
-	public void kill(){
-		isActive = false;
-	}
+                PortManager.addByteReceived(event.getEventValue());
+
+                String data = new String(dataByteFormat, StandardCharsets.UTF_8);
+
+                Window.appendOutputText(data);
+            } catch (SerialPortException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
 }
