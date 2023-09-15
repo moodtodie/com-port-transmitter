@@ -25,7 +25,11 @@ public class PortListener implements SerialPortEventListener {
 
                 String data = new String(dataByteFormat, StandardCharsets.UTF_8);
 
-                Window.appendOutputText(data);
+                if (data.charAt(0) == 13) {
+                    Window.appendOutputText("\n");
+                } else {
+                    Window.appendOutputText(data);
+                }
             } catch (SerialPortException ex) {
                 ex.printStackTrace();
             }
