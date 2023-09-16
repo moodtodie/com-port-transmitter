@@ -4,9 +4,12 @@ import com.github.moodtodie.term5_fcn.serial.PortManager;
 import com.github.moodtodie.term5_fcn.serial.Serial;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -16,27 +19,54 @@ import jssc.SerialPortException;
 
 public class Window extends Application {
     private static TextArea output = null;
-    private static Label labelByteReceived = new Label("  Byte received: 0");
+    private boolean canSend = true;
+    private static final Label labelByteReceived = new Label("Byte received: 0");
+    double padding = 3;
+
+    //  Minimum size for panel
+    private final int minWidth = 200;
+    private final int minHeight = 180;
+
+    //  Maximum size for panel
+    private final int maxWidth = 400;
+    private final int maxHeight = 300;
+    private final int maxHeightSmall = 70;
 
     private StackPane initInputPane() {
         StackPane pane = new StackPane();
-        pane.setMinSize(200, 100);
+        pane.setMinSize(minWidth, minHeight);
+        pane.setMaxSize(maxWidth, maxHeight);
         pane.setAlignment(Pos.CENTER);
+        pane.setPadding(new Insets(padding));
 
         TextArea input = new TextArea();
         input.setWrapText(true);
 
-        input.setMinSize(180, 90);
-        input.setMaxSize(190, 90);
+        input.setMinSize(minWidth, minHeight);
 
         input.setPromptText("Input field");
 
-        input.setOnKeyTyped(event -> {
-            try {
-                PortManager.getPort().write(event.getCharacter());
-            } catch (SerialPortException e) {
-                throw new RuntimeException(e);
+        input.setOnKeyPressed(event -> {
+            // Проверяем, какая клавиша была нажата
+            switch (event.getCode()) {
+                case TAB:
+                case BACK_SPACE:
+                    // Игнорируем событие
+                    canSend = false;
+                    event.consume();
+                    break;
+                default:
             }
+        });
+
+        input.setOnKeyTyped(event -> {
+            if (canSend)
+                try {
+                    PortManager.getPort().write(event.getCharacter());
+                } catch (SerialPortException e) {
+                    throw new RuntimeException(e);
+                }
+            canSend = true;
         });
 
         pane.getChildren().add(input);
@@ -45,17 +75,16 @@ public class Window extends Application {
 
     private StackPane initOutputPane() {
         StackPane pane = new StackPane();
-        pane.setMinSize(200, 100);
+        pane.setMinSize(minWidth, minHeight);
+        pane.setMaxSize(maxWidth, maxHeight);
         pane.setAlignment(Pos.CENTER);
+        pane.setPadding(new Insets(padding));
 
         output = new TextArea();
         output.setEditable(false);
         output.setMouseTransparent(true);
         output.setWrapText(true);
-
-        output.setMinSize(180, 90);
-        output.setMaxSize(190, 90);
-
+        output.setMinSize(minWidth, minHeight);
         output.setPromptText("Output field");
 
         pane.getChildren().add(output);
@@ -65,71 +94,77 @@ public class Window extends Application {
 
     private VBox initControlPane() {
         VBox pane = new VBox();
-        pane.setMinWidth(190);
-        pane.setMaxSize(190, 50);
-        pane.setAlignment(Pos.TOP_CENTER);
+        pane.setMinWidth(minWidth);
+        pane.setMaxSize(maxWidth, maxHeightSmall);
+        pane.setAlignment(Pos.BASELINE_CENTER);
+        pane.setSpacing(padding * 2);
+        pane.setPadding(new Insets(padding));
 
-        HBox pane1 = new HBox();
-        pane1.setAlignment(Pos.CENTER_LEFT);
-        pane1.setMinSize(190, 30);
+        //  ComboBox #1: Выбор последовательных портов
+        HBox subPane1 = new HBox();
+        subPane1.setAlignment(Pos.CENTER_LEFT);
 
-        ComboBox<String> comboBox1 = new ComboBox<>();
-        comboBox1.getItems().addAll(Serial.getPortList());
-        comboBox1.getSelectionModel().selectFirst();
+        ComboBox<String> serialPortBox = new ComboBox<>();
+        serialPortBox.getItems().addAll(Serial.getPortList());
+        serialPortBox.getSelectionModel().selectFirst();
+
+        //  Автоматический выбор свободного порта
         try {
-            PortManager.setPort(comboBox1.getSelectionModel().getSelectedItem());
+            PortManager.setPort(serialPortBox.getSelectionModel().getSelectedItem());
         } catch (SerialPortException e) {
             throw new RuntimeException(e);
         }
-        comboBox1.setOnAction(event -> {
+
+        //  Выбор порта
+        serialPortBox.setOnAction(event -> {
             try {
-                PortManager.setPort(comboBox1.getSelectionModel().getSelectedItem());
+                PortManager.setPort(serialPortBox.getSelectionModel().getSelectedItem());
             } catch (SerialPortException e) {
                 throw new RuntimeException(e);
             }
         });
-        comboBox1.setOnMousePressed(event -> {
-            int selectedIndex = comboBox1.getSelectionModel().getSelectedIndex();
-            if (selectedIndex > 0 && selectedIndex < comboBox1.getItems().size()) {
-                comboBox1.getItems().remove(0, selectedIndex);
-                comboBox1.getItems().remove(selectedIndex, comboBox1.getItems().size());
+
+        //  Динамическое обновление выпадающего списка
+        serialPortBox.setOnMousePressed(event -> {
+            int selectedIndex = serialPortBox.getSelectionModel().getSelectedIndex();
+            if (selectedIndex == serialPortBox.getItems().size() - 1) {
+                serialPortBox.getItems().remove(0, selectedIndex);
             } else if (selectedIndex == 0) {
-                comboBox1.getItems().remove(selectedIndex + 1, comboBox1.getItems().size());
+                serialPortBox.getItems().remove(1, serialPortBox.getItems().size());
             } else {
-                comboBox1.getItems().remove(0, selectedIndex - 1);
+                serialPortBox.getItems().remove(0, selectedIndex);
+                serialPortBox.getItems().remove(1, serialPortBox.getItems().size());
             }
-
-            comboBox1.getItems().addAll(Serial.getPortList());
+            serialPortBox.getItems().addAll(Serial.getPortList());
         });
 
-        pane1.getChildren().addAll(new Label("  Port: "), comboBox1);
+        subPane1.getChildren().addAll(new Label("Port: "), serialPortBox);
 
-        HBox pane2 = new HBox();
-        pane2.setAlignment(Pos.CENTER_LEFT);
-        pane2.setMinSize(190, 30);
+        //  ComboBox #2: Выбор стоп-бит
+        HBox subPane2 = new HBox();
+        subPane2.setAlignment(Pos.CENTER_LEFT);
 
-        ComboBox<String> comboBox2 = new ComboBox<>();
-        comboBox2.getItems().addAll("1", "1.5", "2");
-        comboBox2.getSelectionModel().selectFirst();
-        PortManager.setStopBits(comboBox2.getSelectionModel().getSelectedItem());
-        comboBox2.setOnAction(event -> {
-            PortManager.setStopBits(comboBox2.getSelectionModel().getSelectedItem());
-        });
+        ComboBox<String> stopBitBox = new ComboBox<>();
+        stopBitBox.getItems().addAll("1", "1.5", "2");
+        stopBitBox.getSelectionModel().selectFirst();
+        PortManager.setStopBits(stopBitBox.getSelectionModel().getSelectedItem());
+        stopBitBox.setOnAction(event -> PortManager.setStopBits(stopBitBox.getSelectionModel().getSelectedItem()));
 
-        pane2.getChildren().addAll(new Label("  Stop bit: "), comboBox2);
+        subPane2.getChildren().addAll(new Label("Stop bit: "), stopBitBox);
 
-
-        pane.getChildren().addAll(pane1, pane2);
-
+        pane.getChildren().addAll(subPane1, subPane2);
         return pane;
     }
 
     private VBox initStatusPane() {
         VBox pane = new VBox();
-        pane.setMinWidth(190);
-        pane.setMaxSize(190, 50);
+        pane.setMinWidth(minWidth);
+        pane.setMaxSize(maxWidth, maxHeightSmall);
+        pane.setAlignment(Pos.TOP_LEFT);
+        pane.setSpacing(padding * 2);
+        pane.setPadding(new Insets(padding * 2));
 
-        Label label = new Label("  Baud rate: " + Serial.getBaudRate());
+        Label label = new Label("Baud rate: " + Serial.getBaudRate());
         label.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
         labelByteReceived.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
@@ -142,22 +177,20 @@ public class Window extends Application {
     public void start(Stage stage) {
         GridPane root = new GridPane();
         Scene scene = new Scene(root);
+        scene.getStylesheets().add("style.css");
+
         stage.setScene(scene);
         stage.setTitle("COM port transmitter");
-        stage.setMinWidth(400);
-        stage.setMinHeight(205);
-
-        StackPane inputPane = initInputPane();
-        StackPane outputPane = initOutputPane();
-        VBox controlPane = initControlPane();
-        VBox statusPane = initStatusPane();
-
-        root.add(inputPane, 0, 0);
-        root.add(outputPane, 1, 0);
-        root.add(controlPane, 0, 1);
-        root.add(statusPane, 1, 1);
-
         stage.setResizable(false);
+
+        root.setMinSize(minWidth * 2, minHeight);
+        root.setMaxSize(maxWidth * 2, maxHeight + maxHeightSmall);
+
+        root.add(initInputPane(), 0, 0);
+        root.add(initOutputPane(), 1, 0);
+        root.add(initControlPane(), 0, 1);
+        root.add(initStatusPane(), 1, 1);
+
         stage.show();
     }
 
@@ -168,7 +201,10 @@ public class Window extends Application {
     }
 
     public static void setLabelByteReceived(int count) {
-        Platform.runLater(() -> Window.labelByteReceived.setText("  Byte received: " + count));
+        if (count > 1)
+            Platform.runLater(() -> Window.labelByteReceived.setText("Bytes received: " + count));
+        else
+            Platform.runLater(() -> Window.labelByteReceived.setText("Byte received: " + count));
     }
 
     public static void main(String[] args) {

@@ -13,7 +13,7 @@ public class PortManager {
         if (port != null) {
             port.close();
         }
-        port = new Serial(portName, getStopBits());
+        port = new Serial(portName);
     }
 
     public static Serial getPort() {

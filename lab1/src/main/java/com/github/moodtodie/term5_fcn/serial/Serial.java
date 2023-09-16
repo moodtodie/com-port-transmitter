@@ -8,26 +8,30 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Allows communication with a serial port
+ */
 public class Serial {
     private static final int BAUDRATE = SerialPort.BAUDRATE_9600;
     private static final int DATABITS = SerialPort.DATABITS_8;
-    private static int STOPBITS = SerialPort.STOPBITS_1;
     private static final int PARITY = SerialPort.PARITY_NONE;
 
     private SerialPort port;
 
-    public Serial(String port, int stopBits) throws SerialPortException {
+    /**
+     * Opens a serial port and provides the ability to read/write data using this port
+     * @param port name of the serial port that will be used
+     * @throws SerialPortException
+     */
+    public Serial(String port) throws SerialPortException {
         setPort(port);
-        Serial.STOPBITS = stopBits;
         open();
     }
 
-    public Serial(int stopBits) throws SerialPortException {
-        autoSetPort();
-        Serial.STOPBITS = stopBits;
-        open();
-    }
-
+    /**
+     * Opens a serial port
+     * @throws SerialPortException
+     */
     private void open() throws SerialPortException {
         if (port == null) {
             autoSetPort();
@@ -46,6 +50,10 @@ public class Serial {
         System.out.println("info: " + port.getPortName() + " is open");
     }
 
+    /**
+     * Closes the serial port
+     * @throws SerialPortException
+     */
     public void close() throws SerialPortException {
         // Закрываем последовательный порт
         port.closePort();
@@ -53,13 +61,21 @@ public class Serial {
         System.out.println("info: " + port.getPortName() + " is close");
     }
 
+    /**
+     * Transmits data via serial port
+     * @param data data to be transmitted
+     * @throws SerialPortException
+     */
     public void write(String data) throws SerialPortException {
-        port.setParams(BAUDRATE, DATABITS, STOPBITS, PARITY);
+        port.setParams(BAUDRATE, DATABITS, PortManager.getStopBits(), PARITY);
 
         // Отправляем данные в последовательный порт
         port.writeBytes(data.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * Automatically selects the first free serial port
+     */
     private void autoSetPort() {
         for (String portName : getPortList()) {
             SerialPort serialPort = new SerialPort(portName);
@@ -71,6 +87,10 @@ public class Serial {
         System.exit(1);
     }
 
+    /**
+     * Sets the new serial port to be used
+     * @param portName serial port name
+     */
     public void setPort(String portName) {
         SerialPort serialPort = new SerialPort(portName);
         if (!serialPort.isOpened()) {
@@ -82,22 +102,18 @@ public class Serial {
         System.exit(1);
     }
 
+    /**
+     * Get the baudrate value used
+     * @return baudrate value
+     */
     public static String getBaudRate() {
         return String.valueOf(BAUDRATE);
     }
 
-    public static void test(String name) {
-        for (String s : SerialPortList.getPortNames()) {
-            if (s.equals(name)) {
-                try {
-                    System.out.println(name + " is opened: " + new SerialPort(name).openPort());
-                } catch (SerialPortException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
+    /**
+     * Get a list of unused serial ports
+     * @return list of unused serial ports
+     */
     public static String[] getPortList() {
         List<String> nonNullStrings = new ArrayList<>();
 
@@ -116,7 +132,8 @@ public class Serial {
 
         if (newStrings.length < 1) {
             System.out.println("Error: The serial ports cannot be found.");
-            System.exit(1);
+            if (PortManager.getPort() == null)
+                System.exit(1);
         }
 
         // Возвращаем новый массив
