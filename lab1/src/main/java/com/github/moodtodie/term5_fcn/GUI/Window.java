@@ -7,9 +7,11 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -20,6 +22,7 @@ import jssc.SerialPortException;
 public class Window extends Application {
     private static TextArea output = null;
     private boolean canSend = true;
+    private boolean mouseInArea = false;
     private static final Label labelByteReceived = new Label("Byte received: 0");
     double padding = 3;
 
@@ -46,11 +49,26 @@ public class Window extends Application {
 
         input.setPromptText("Input field");
 
+        // Устанавливаем обработчик события ContextMenuRequested
+        input.setContextMenu(new ContextMenu());
+
         input.setOnKeyPressed(event -> {
+            // Перемещаем курсор в конец строки
+            input.positionCaret(input.getLength());
+
+            // Проверяем, была ли нажата клавиша Ctrl
+            if (event.isControlDown()) {
+                // Игнорируем событие
+                canSend = false;
+                event.consume();
+                return;
+            }
+
             // Проверяем, какая клавиша была нажата
             switch (event.getCode()) {
                 case TAB:
                 case BACK_SPACE:
+                case DELETE:
                     // Игнорируем событие
                     canSend = false;
                     event.consume();
