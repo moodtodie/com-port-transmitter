@@ -20,6 +20,7 @@ public class Serial {
 
     /**
      * Opens a serial port and provides the ability to read/write data using this port
+     *
      * @param port name of the serial port that will be used
      * @throws SerialPortException
      */
@@ -30,6 +31,7 @@ public class Serial {
 
     /**
      * Opens a serial port
+     *
      * @throws SerialPortException
      */
     private void open() throws SerialPortException {
@@ -52,6 +54,7 @@ public class Serial {
 
     /**
      * Closes the serial port
+     *
      * @throws SerialPortException
      */
     public void close() throws SerialPortException {
@@ -63,6 +66,7 @@ public class Serial {
 
     /**
      * Transmits data via serial port
+     *
      * @param data data to be transmitted
      * @throws SerialPortException
      */
@@ -71,6 +75,19 @@ public class Serial {
 
         // Отправляем данные в последовательный порт
         port.writeBytes(data.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Transmits data via serial port
+     *
+     * @param data data to be transmitted
+     * @throws SerialPortException
+     */
+    public void write(byte[] data) throws SerialPortException {
+        port.setParams(BAUDRATE, DATABITS, PortManager.getStopBits(), PARITY);
+
+        // Отправляем данные в последовательный порт
+        port.writeBytes(data);
     }
 
     /**
@@ -89,6 +106,7 @@ public class Serial {
 
     /**
      * Sets the new serial port to be used
+     *
      * @param portName serial port name
      */
     public void setPort(String portName) {
@@ -104,6 +122,7 @@ public class Serial {
 
     /**
      * Get the baudrate value used
+     *
      * @return baudrate value
      */
     public static String getBaudRate() {
@@ -112,6 +131,7 @@ public class Serial {
 
     /**
      * Get a list of unused serial ports
+     *
      * @return list of unused serial ports
      */
     public static String[] getPortList() {
@@ -138,6 +158,15 @@ public class Serial {
 
         // Возвращаем новый массив
         return newStrings;
+    }
+
+    /**
+     * Get the name of this serial port
+     *
+     * @return name of this serial port
+     */
+    public String getPortName() {
+        return port.getPortName();
     }
 
     private static boolean isOpened(String port) {

@@ -1,5 +1,6 @@
 package com.github.moodtodie.term5_fcn.GUI;
 
+import com.github.moodtodie.term5_fcn.bytestuffing.ByteStuffing;
 import com.github.moodtodie.term5_fcn.serial.PortManager;
 import com.github.moodtodie.term5_fcn.serial.Serial;
 import javafx.application.Application;
@@ -11,7 +12,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -22,7 +22,6 @@ import jssc.SerialPortException;
 public class Window extends Application {
     private static TextArea output = null;
     private boolean canSend = true;
-    private boolean mouseInArea = false;
     private static final Label labelByteReceived = new Label("Byte received: 0");
     double padding = 3;
 
@@ -34,6 +33,8 @@ public class Window extends Application {
     private final int maxWidth = 400;
     private final int maxHeight = 300;
     private final int maxHeightSmall = 70;
+
+    byte[] data = new byte[19];
 
     private StackPane initInputPane() {
         StackPane pane = new StackPane();
@@ -80,7 +81,19 @@ public class Window extends Application {
         input.setOnKeyTyped(event -> {
             if (canSend)
                 try {
-                    PortManager.getPort().write(event.getCharacter());
+//                    data[] =  // <-------------------------------------------------------------------------------------------
+//                    PortManager.getPort().write(event.getCharacter());
+
+                    ByteStuffing.addData(event.getCharacter());
+                    if (ByteStuffing.getDataByteSize() >= 19) {
+                        PortManager.getPort().write(
+                                ByteStuffing.convert(
+                                        PortManager.getPort().getPortName(),
+                                        ByteStuffing.getData())
+                        );
+                        ByteStuffing.clearData();
+                    }
+
                 } catch (SerialPortException e) {
                     throw new RuntimeException(e);
                 }

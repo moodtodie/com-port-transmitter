@@ -15,24 +15,41 @@ public class PortListener implements SerialPortEventListener {
         this.port = port;
     }
 
+    private int bytesCounter = 0;
+    private final StringBuilder buffer = new StringBuilder();
+
     @Override
     public void serialEvent(SerialPortEvent event) {
         if (event.isRXCHAR() && event.getEventValue() > 0) { // data is available
             try {
                 byte[] dataByteFormat = port.readBytes(event.getEventValue());
 
-                PortManager.addByteReceived(event.getEventValue());
+                bytesCounter += event.getEventValue();
 
-                String data = new String(dataByteFormat, StandardCharsets.UTF_8);
+//                PortManager.addByteReceived(event.getEventValue());
 
-                if (data.charAt(0) == 13) {
-                    Window.appendOutputText("\n");
-                } else {
-                    Window.appendOutputText(data);
+                this.buffer.append(new String(dataByteFormat, StandardCharsets.UTF_8));
+//                String data = new String(dataByteFormat, StandardCharsets.UTF_8);
+
+                if (bytesCounter >= 24) {
+                    PortManager.addByteReceived(bytesCounter);
+                    String data = this.buffer.toString();
+                    for (int i = 0; i < data.length(); i++) {
+                        appendTextArea(data.charAt(i));
+                    }
+                    bytesCounter = 0;
                 }
             } catch (SerialPortException ex) {
                 ex.printStackTrace();
             }
+        }
+    }
+
+    private void appendTextArea(char ch) {
+        if (ch == 13) {
+            Window.appendOutputText("\n");
+        } else {
+            Window.appendOutputText(String.valueOf(ch));
         }
     }
 }
