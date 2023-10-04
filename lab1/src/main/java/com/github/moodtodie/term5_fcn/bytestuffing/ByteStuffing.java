@@ -2,6 +2,11 @@ package com.github.moodtodie.term5_fcn.bytestuffing;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Problems:
+ * Ban the splitting of the combination "#r$"
+ */
+
 public class ByteStuffing {
   private static final StringBuilder data = new StringBuilder();
 
@@ -21,8 +26,19 @@ public class ByteStuffing {
       return string;
     }
 
+    System.out.println("info: data bytes length=" + getDataByteSize());
     StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < 19; i++) {
+    for (int i = 0; i < 19;) {
+
+      //  String.valueOf(ch).getBytes(StandardCharsets.UTF_8).length
+      if (String.valueOf(data.charAt(0)).getBytes(StandardCharsets.UTF_8).length + i >= 19) {
+        System.out.println("info: Character can not be write");
+        for (int j = i; j < 19; j++) {
+          builder.append((char) 0);
+        }
+        break;
+      }
+      i += String.valueOf(data.charAt(0)).getBytes(StandardCharsets.UTF_8).length;
       builder.append(data.charAt(0));
       data.deleteCharAt(0);
     }
@@ -58,6 +74,9 @@ public class ByteStuffing {
         builder.deleteCharAt(i);  //  rm '$'
         flag = false;
       }
+
+      if (builder.charAt(i) == (char) 0)
+        builder.deleteCharAt(i);  //  rm NULL
     }
 
     System.out.println("info: data after unstaffing: " + builder);
