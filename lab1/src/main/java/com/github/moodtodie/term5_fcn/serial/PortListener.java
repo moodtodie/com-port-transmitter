@@ -1,6 +1,8 @@
 package com.github.moodtodie.term5_fcn.serial;
 
 import com.github.moodtodie.term5_fcn.GUI.Window;
+import com.github.moodtodie.term5_fcn.bytestuffing.ByteStuffing;
+import com.github.moodtodie.term5_fcn.bytestuffing.Packet;
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
@@ -9,47 +11,44 @@ import jssc.SerialPortException;
 import java.nio.charset.StandardCharsets;
 
 public class PortListener implements SerialPortEventListener {
-    SerialPort port;
+  SerialPort port;
 
-    public PortListener(SerialPort port) {
-        this.port = port;
+  public PortListener(SerialPort port) {
+    this.port = port;
+  }
+
+  @Override
+  public void serialEvent(SerialPortEvent event) {
+    if (event.isRXCHAR() && event.getEventValue() > 0) { // data is available
+      try {
+        //  Get data
+        byte[] buffer = port.readBytes(event.getEventValue());
+
+        //  Unpacketing
+        Packet packet = new Packet(buffer);
+
+        //  Unstuffing
+        String massage = ByteStuffing.unstaffing(packet.getData());
+
+        //  Send text
+        PortManager.addByteReceived(massage.getBytes(StandardCharsets.UTF_8).length);
+        appendTextArea(massage);
+      } catch (SerialPortException ex) {
+        ex.printStackTrace();
+      }
     }
+  }
 
-    private int bytesCounter = 0;
-    private final StringBuilder buffer = new StringBuilder();
-
-    @Override
-    public void serialEvent(SerialPortEvent event) {
-        if (event.isRXCHAR() && event.getEventValue() > 0) { // data is available
-            try {
-                byte[] dataByteFormat = port.readBytes(event.getEventValue());
-
-                bytesCounter += event.getEventValue();
-
-//                PortManager.addByteReceived(event.getEventValue());
-
-                this.buffer.append(new String(dataByteFormat, StandardCharsets.UTF_8));
-//                String data = new String(dataByteFormat, StandardCharsets.UTF_8);
-
-                if (bytesCounter >= 24) {
-                    PortManager.addByteReceived(bytesCounter);
-                    String data = this.buffer.toString();
-                    for (int i = 0; i < data.length(); i++) {
-                        appendTextArea(data.charAt(i));
-                    }
-                    bytesCounter = 0;
-                }
-            } catch (SerialPortException ex) {
-                ex.printStackTrace();
-            }
-        }
+  private void appendTextArea(char ch) {
+    if (ch == 13) {
+      Window.appendOutputText("\n");
+    } else {
+      Window.appendOutputText(String.valueOf(ch));
     }
+  }
 
-    private void appendTextArea(char ch) {
-        if (ch == 13) {
-            Window.appendOutputText("\n");
-        } else {
-            Window.appendOutputText(String.valueOf(ch));
-        }
-    }
+  private void appendTextArea(String msg) {
+    for (int i = 0; i < msg.length(); i++)
+      appendTextArea(msg.charAt(i));
+  }
 }

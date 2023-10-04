@@ -1,69 +1,106 @@
 package com.github.moodtodie.term5_fcn.bytestuffing;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class Packet {
-    private byte[] flag = new byte[2];
-    private byte dst;
-    private byte src;
+  private static final byte[] FLAG = "#s".getBytes(StandardCharsets.UTF_8);
+  private static final byte ZERO = (byte) 0;  //  Destination Address & FCS
 
-    private byte[] data = new byte[19];
-    private byte fcs;
+  private byte[] flag = new byte[2];
+  private byte dst;
+  private byte src;
 
-    public Packet(byte[] flag, byte dst, byte src, byte[] data, byte fcs) {
-        if (flag.length < 2 || data.length < 19) {
-            System.out.println("Error: Can't create Package");
-            return;
-        }
+  private byte[] data = new byte[19];
+  private byte fcs;
 
-        System.arraycopy(flag, 0, this.flag, 0, 2);
-        this.dst = dst;
-        this.src = src;
-        System.arraycopy(data, 0, this.data, 0, 19);
-        this.fcs = fcs;
+  public Packet(byte src, byte[] data) {
+    if (data.length < 19) {
+      System.out.println("Error: Can't converting, data too long");
+      return;
     }
 
-    public Packet(byte[] _package) {
-        if (_package.length < 24) {
-            System.out.println("Error: Can't create Package, byte array too short");
-            return;
-        }
-        System.arraycopy(_package, 0, this.flag, 0, 2);
-        this.dst = _package[2];
-        this.src = _package[3];
-        System.arraycopy(_package, 4, this.data, 0, 19);
-        this.fcs = _package[23];
+    System.arraycopy(FLAG, 0, this.flag, 0, 2);
+    this.dst = ZERO;
+    this.src = src;
+    System.arraycopy(data, 0, this.data, 0, 19);
+    this.fcs = ZERO;
+  }
+
+  public Packet(byte[] flag, byte dst, byte src, byte[] data, byte fcs) {
+    if (flag.length < 2 || data.length < 19) {
+      System.out.println("Error: Can't create Package");
+      return;
     }
 
-    public byte[] getBytes() {
-        byte[] bytes = new byte[24];
+    System.arraycopy(flag, 0, this.flag, 0, 2);
+    this.dst = dst;
+    this.src = src;
+    System.arraycopy(data, 0, this.data, 0, 19);
+    this.fcs = fcs;
+  }
 
-        //  Flag
-        System.arraycopy(flag, 0, bytes, 0, flag.length);
-
-        //  Destination Address
-        bytes[2] = dst;
-
-        //  Source Address
-        bytes[3] = src;
-
-        //  Data
-        System.arraycopy(data, 0, bytes, 4, data.length);
-
-        //  FCS
-        bytes[23] = fcs;
-
-        return bytes;
+  public Packet(byte[] _package) {
+    if (_package.length < 24) {
+      System.out.println("Error: Can't create Package, byte array too short");
+      return;
     }
+    System.arraycopy(_package, 0, this.flag, 0, 2);
+    this.dst = _package[2];
+    this.src = _package[3];
+    System.arraycopy(_package, 4, this.data, 0, 19);
+    this.fcs = _package[23];
+  }
 
-    @Override
-    public String toString() {
-        return "Package{" +
-                "flag=" + Arrays.toString(flag) +
-                ", dst=" + dst +
-                ", src=" + src +
-                ", data=" + Arrays.toString(data) +
-                ", fcs=" + fcs +
-                '}';
-    }
+  public byte[] getFlag() {
+    return flag;
+  }
+
+  public byte getDst() {
+    return dst;
+  }
+
+  public byte getSrc() {
+    return src;
+  }
+
+  public byte[] getData() {
+    return data;
+  }
+
+  public byte getFcs() {
+    return fcs;
+  }
+
+  public byte[] getBytes() {
+    byte[] bytes = new byte[24];
+
+    //  Flag
+    System.arraycopy(flag, 0, bytes, 0, flag.length);
+
+    //  Destination Address
+    bytes[2] = dst;
+
+    //  Source Address
+    bytes[3] = src;
+
+    //  Data
+    System.arraycopy(data, 0, bytes, 4, data.length);
+
+    //  FCS
+    bytes[23] = fcs;
+
+    return bytes;
+  }
+
+  @Override
+  public String toString() {
+    return "Package{" +
+        "flag=" + Arrays.toString(flag) +
+        ", dst=" + dst +
+        ", src=" + src +
+        ", data=" + Arrays.toString(data) +
+        ", fcs=" + fcs +
+        '}';
+  }
 }
