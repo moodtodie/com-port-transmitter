@@ -26,6 +26,7 @@ public class Window extends Application {
   private static TextArea output = null;
   private boolean canSend = true;
   private static final Label labelByteReceived = new Label("Byte received: 0");
+  private static final TextArea textSentPacket = new TextArea("The package hasn't been sent yet");
   double padding = 3;
 
   //  Minimum size for panel
@@ -36,8 +37,6 @@ public class Window extends Application {
   private final int maxWidth = 400;
   private final int maxHeight = 300;
   private final int maxHeightSmall = 70;
-
-  byte[] data = new byte[19];
 
   private StackPane initInputPane() {
     StackPane pane = new StackPane();
@@ -86,15 +85,14 @@ public class Window extends Application {
         try {
           ByteStuffing.addData(event.getCharacter());
           if (ByteStuffing.getDataByteSize() >= 19) {
-            PortManager.getPort().write(
-                //  Create Packet
-                new Packet(
-                    //  Port number
-                    (byte) PortManager.getPort().getPortName().charAt(PortManager.getPort().getPortName().length() - 1),
-                    //  Data
-                    ByteStuffing.getData().getBytes(StandardCharsets.UTF_8)
-                ).getBytes()
+            Packet packet = new Packet( //  Create Packet
+                //  Port number
+                (byte) PortManager.getPort().getPortName().charAt(PortManager.getPort().getPortName().length() - 1),
+                //  Data
+                ByteStuffing.getData().getBytes(StandardCharsets.UTF_8)
             );
+            setLabelPacket(packet.toString());
+            PortManager.getPort().write(packet.getBytes());
           }
         } catch (SerialPortException e) {
           throw new RuntimeException(e);
@@ -199,10 +197,11 @@ public class Window extends Application {
 
     Label label = new Label("Baud rate: " + Serial.getBaudRate());
     label.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
-
     labelByteReceived.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+    textSentPacket.setEditable(false);
+    textSentPacket.setMinSize(minWidth, 50);
 
-    pane.getChildren().addAll(label, labelByteReceived);
+    pane.getChildren().addAll(label, labelByteReceived, textSentPacket);
     return pane;
   }
 
@@ -238,6 +237,10 @@ public class Window extends Application {
       Platform.runLater(() -> Window.labelByteReceived.setText("Bytes received: " + count));
     else
       Platform.runLater(() -> Window.labelByteReceived.setText("Byte received: " + count));
+  }
+
+  public static void setLabelPacket(String packet) {
+    Platform.runLater(() -> Window.textSentPacket.setText("Sent: " + packet));
   }
 
   public static void main(String[] args) {
