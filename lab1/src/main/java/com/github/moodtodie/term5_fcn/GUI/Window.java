@@ -9,10 +9,7 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -26,7 +23,8 @@ public class Window extends Application {
   private static TextArea output = null;
   private boolean canSend = true;
   private static final Label labelByteReceived = new Label("Byte received: 0");
-  private static final TextArea textSentPacket = new TextArea("The package hasn't been sent yet");
+  //  private static final TextArea textSentPacket = new TextArea("The package hasn't been sent yet");
+  private static final HBox panelSentPacket = new HBox(new Label("The package hasn't been sent yet"));
   double padding = 3;
 
   //  Minimum size for panel
@@ -198,10 +196,12 @@ public class Window extends Application {
     Label label = new Label("Baud rate: " + Serial.getBaudRate());
     label.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
     labelByteReceived.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
-    textSentPacket.setEditable(false);
-    textSentPacket.setMinSize(minWidth, 50);
 
-    pane.getChildren().addAll(label, labelByteReceived, textSentPacket);
+//    panelSentPacket
+    ScrollPane scrollPane = new ScrollPane(panelSentPacket);
+    scrollPane.setMinSize(minWidth, 46);
+
+    pane.getChildren().addAll(label, labelByteReceived, scrollPane);
     return pane;
   }
 
@@ -240,7 +240,60 @@ public class Window extends Application {
   }
 
   public static void setLabelPacket(String packet) {
-    Platform.runLater(() -> Window.textSentPacket.setText("Sent: " + packet));
+    Platform.runLater(() -> panelSentPacket.getChildren().clear());
+    Platform.runLater(() -> panelSentPacket.getChildren().add(new Label("Sent package: ")));
+    Platform.runLater(() -> panelSentPacket.getChildren().add(new Label(packet.substring(packet.indexOf("{"), packet.indexOf("data=[") + 6))));
+
+    String style = "-fx-font-weight: bold; -fx-underline: true";
+    String data = packet.substring(packet.indexOf("data=[") + 6, packet.indexOf("], fcs="));
+
+    int firstIndex = 0;
+    String numder = data;
+    int counter = 0;
+
+    while (firstIndex < numder.length()) {
+      Label label = new Label();
+      numder = numder.substring(firstIndex);
+
+      String p = numder.substring(0, getLastIndex(numder));
+
+      if (p.equals("35") && isStaffing(numder))
+        counter = 4;
+
+      label.setText(p);
+
+      if (counter > 0) {
+        label.setStyle(style);
+        Platform.runLater(() -> panelSentPacket.getChildren().add(label));
+        counter--;
+      } else
+        Platform.runLater(() -> panelSentPacket.getChildren().add(label));
+
+      firstIndex = getLastIndex(numder) + 2;
+
+      if (firstIndex < numder.length())
+        Platform.runLater(() -> panelSentPacket.getChildren().add(new Label(", ")));
+    }
+
+    Platform.runLater(() -> panelSentPacket.getChildren().add(new Label(packet.substring(packet.indexOf("], fcs=")))));
+  }
+
+  private static boolean isStaffing(String source) {
+    String string = source;
+    for (int i = 0; i < 3; i++) {
+      String p = string.substring(0, getLastIndex(string));
+      if (p.equals("36") && i == 2)
+        return true;
+      string = string.substring(getLastIndex(string) + 2);
+    }
+    return false;
+  }
+
+  private static int getLastIndex(String tail) {
+    int indexOfEnd = 0;
+    for (int j = 0; j < tail.length() && tail.charAt(j) != ','; j++)
+      indexOfEnd = j + 1;
+    return indexOfEnd;
   }
 
   public static void main(String[] args) {
