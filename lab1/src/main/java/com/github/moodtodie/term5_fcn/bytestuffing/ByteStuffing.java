@@ -29,7 +29,7 @@ public class ByteStuffing {
         break;
       }
 
-      if (String.valueOf(data.charAt(0)).getBytes(StandardCharsets.UTF_8).length + i >= 19) {
+      if (String.valueOf(data.charAt(0)).getBytes(StandardCharsets.UTF_8).length + i > 19) {
         System.out.println("info: Character can not be write");
         for (int j = i; j < 19; j++)
           builder.append((char) 0);
