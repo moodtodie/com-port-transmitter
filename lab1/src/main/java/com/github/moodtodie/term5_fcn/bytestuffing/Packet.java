@@ -7,11 +7,11 @@ public class Packet {
   private static final byte[] FLAG = "#s".getBytes(StandardCharsets.UTF_8);
   private static final byte ZERO = (byte) 0;  //  Destination Address & FCS
 
-  private byte[] flag = new byte[2];
+  private final byte[] flag = new byte[2];
   private byte dst;
   private byte src;
 
-  private byte[] data = new byte[19];
+  private final byte[] data = new byte[19];
   private byte fcs;
 
   public Packet(byte src, byte[] data) {
@@ -95,7 +95,20 @@ public class Packet {
 
   @Override
   public String toString() {
+    int src = this.src;
+    if (src < 0)
+      src += 256;
     return "Package{" +
+        "flag=[" + new String(flag, StandardCharsets.UTF_8) +
+        "], dst=" + (dst != 0 ? (char) dst : "null") +
+        ", src=" + src +
+        ", data=[" + new String(data, StandardCharsets.UTF_8) +
+        "], fcs=" + (fcs != 0 ? (char) fcs : "null") +
+        "}";
+  }
+
+  public String getStruct() {
+    return "Packet{" +
         "flag=" + Arrays.toString(flag) +
         ", dst=" + dst +
         ", src=" + src +

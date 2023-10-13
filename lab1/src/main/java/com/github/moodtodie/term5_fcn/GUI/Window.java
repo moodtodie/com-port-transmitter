@@ -23,7 +23,6 @@ public class Window extends Application {
   private static TextArea output = null;
   private boolean canSend = true;
   private static final Label labelByteReceived = new Label("Byte received: 0");
-  //  private static final TextArea textSentPacket = new TextArea("The package hasn't been sent yet");
   private static final HBox panelSentPacket = new HBox(new Label("The package hasn't been sent yet"));
   double padding = 3;
 
@@ -85,7 +84,7 @@ public class Window extends Application {
           if (ByteStuffing.getDataByteSize() >= 19) {
             Packet packet = new Packet( //  Create Packet
                 //  Port number
-                (byte) PortManager.getPort().getPortName().charAt(PortManager.getPort().getPortName().length() - 1),
+                (byte) Integer.parseInt(PortManager.getPort().getPortName().substring(3)),
                 //  Data
                 ByteStuffing.getData().getBytes(StandardCharsets.UTF_8)
             );
@@ -197,7 +196,7 @@ public class Window extends Application {
     label.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
     labelByteReceived.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
-//    panelSentPacket
+    panelSentPacket.setMouseTransparent(true);
     ScrollPane scrollPane = new ScrollPane(panelSentPacket);
     scrollPane.setMinSize(minWidth, 46);
 
@@ -247,20 +246,13 @@ public class Window extends Application {
     String style = "-fx-font-weight: bold; -fx-underline: true";
     String data = packet.substring(packet.indexOf("data=[") + 6, packet.indexOf("], fcs="));
 
-    int firstIndex = 0;
-    String numder = data;
     int counter = 0;
+    for (int i = 0; i < data.length(); i++) {
+      char ch = data.charAt(i);
+      Label label = new Label(String.valueOf(ch));
 
-    while (firstIndex < numder.length()) {
-      Label label = new Label();
-      numder = numder.substring(firstIndex);
-
-      String p = numder.substring(0, getLastIndex(numder));
-
-      if (p.equals("35") && isStaffing(numder))
+      if (ch == '#' && i < data.length() - 3 && isStaffing(data.substring(i)))
         counter = 4;
-
-      label.setText(p);
 
       if (counter > 0) {
         label.setStyle(style);
@@ -268,32 +260,13 @@ public class Window extends Application {
         counter--;
       } else
         Platform.runLater(() -> panelSentPacket.getChildren().add(label));
-
-      firstIndex = getLastIndex(numder) + 2;
-
-      if (firstIndex < numder.length())
-        Platform.runLater(() -> panelSentPacket.getChildren().add(new Label(", ")));
     }
 
     Platform.runLater(() -> panelSentPacket.getChildren().add(new Label(packet.substring(packet.indexOf("], fcs=")))));
   }
 
   private static boolean isStaffing(String source) {
-    String string = source;
-    for (int i = 0; i < 3; i++) {
-      String p = string.substring(0, getLastIndex(string));
-      if (p.equals("36") && i == 2)
-        return true;
-      string = string.substring(getLastIndex(string) + 2);
-    }
-    return false;
-  }
-
-  private static int getLastIndex(String tail) {
-    int indexOfEnd = 0;
-    for (int j = 0; j < tail.length() && tail.charAt(j) != ','; j++)
-      indexOfEnd = j + 1;
-    return indexOfEnd;
+    return source.charAt(1) == 'r' && source.charAt(2) == '$';
   }
 
   public static void main(String[] args) {
