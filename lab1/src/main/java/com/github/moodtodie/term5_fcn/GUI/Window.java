@@ -240,14 +240,19 @@ public class Window extends Application {
   }
 
   private static void printData(String data) {
-    String staffingStyle = "-fx-font-weight: bold; -fx-underline: true";
+    String staffingStyle = "-fx-font-weight: bold; -fx-underline: true; -fx-background-color: #D06464";
     int counter = 0;
 
     for (int i = 0; i < data.length(); i++) {
       char ch = data.charAt(i);
+
       Label label = new Label(String.valueOf(ch));
       if (label.getText().equals("\r")) {
         label.setText("\\n");
+        label.setStyle(byteStyle);
+      }
+      if (ch == 0) {
+        label.setText("0");
         label.setStyle(byteStyle);
       }
 
@@ -255,7 +260,7 @@ public class Window extends Application {
         counter = 4;
 
       if (counter > 0) {
-        label.setStyle(staffingStyle);
+        if (counter > 1 && counter < 4) label.setStyle(staffingStyle);
         Platform.runLater(() -> panelSentPacket.getChildren().add(label));
         counter--;
       } else
