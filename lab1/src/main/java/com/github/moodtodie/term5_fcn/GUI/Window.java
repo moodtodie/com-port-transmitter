@@ -34,6 +34,7 @@ public class Window extends Application {
   private final int maxWidth = 400;
   private final int maxHeight = 300;
   private final int maxHeightSmall = 70;
+  private static final String byteStyle = "-fx-underline: true; -fx-background-color: #AAAAAA";
 
   private StackPane initInputPane() {
     StackPane pane = new StackPane();
@@ -88,7 +89,7 @@ public class Window extends Application {
                 //  Data
                 ByteStuffing.getData().getBytes(StandardCharsets.UTF_8)
             );
-            setLabelPacket(packet.toString());
+            setLabelPacket(packet);
             PortManager.getPort().write(packet.getBytes());
           }
         } catch (SerialPortException e) {
@@ -238,31 +239,57 @@ public class Window extends Application {
       Platform.runLater(() -> Window.labelByteReceived.setText("Byte received: " + count));
   }
 
-  public static void setLabelPacket(String packet) {
-    Platform.runLater(() -> panelSentPacket.getChildren().clear());
-    Platform.runLater(() -> panelSentPacket.getChildren().add(new Label("Sent package: ")));
-    Platform.runLater(() -> panelSentPacket.getChildren().add(new Label(packet.substring(packet.indexOf("{"), packet.indexOf("data=[") + 6))));
-
-    String style = "-fx-font-weight: bold; -fx-underline: true";
-    String data = packet.substring(packet.indexOf("data=[") + 6, packet.indexOf("], fcs="));
-
+  private static void printData(String data) {
+    String staffingStyle = "-fx-font-weight: bold; -fx-underline: true";
     int counter = 0;
+
     for (int i = 0; i < data.length(); i++) {
       char ch = data.charAt(i);
       Label label = new Label(String.valueOf(ch));
+      if (label.getText().equals("\r")) {
+        label.setText("\\n");
+        label.setStyle(byteStyle);
+      }
 
       if (ch == '#' && i < data.length() - 3 && isStaffing(data.substring(i)))
         counter = 4;
 
       if (counter > 0) {
-        label.setStyle(style);
+        label.setStyle(staffingStyle);
         Platform.runLater(() -> panelSentPacket.getChildren().add(label));
         counter--;
       } else
         Platform.runLater(() -> panelSentPacket.getChildren().add(label));
     }
+  }
 
-    Platform.runLater(() -> panelSentPacket.getChildren().add(new Label(packet.substring(packet.indexOf("], fcs=")))));
+  public static void setLabelPacket(Packet packet) {
+    Platform.runLater(() -> panelSentPacket.getChildren().clear());
+
+    Platform.runLater(() -> panelSentPacket.getChildren().add(new Label("Sent package: ")));
+
+    Label label;
+
+    //  Flag
+    Platform.runLater(() -> panelSentPacket.getChildren().add(new Label(
+        new String(packet.getFlag(), StandardCharsets.UTF_8)
+    )));
+    //  DST
+    Platform.runLater(() -> panelSentPacket.getChildren().add(new Label(
+        String.valueOf(packet.getDst())
+    )));
+    //  Src
+    int src = packet.getSrc();
+    if (src < 0) src += 256;
+    label = new Label(String.valueOf(src));
+    if (src > 9) label.setStyle(byteStyle);
+    Platform.runLater(() -> panelSentPacket.getChildren().add(label));
+    //  Data
+    printData(new String(packet.getData(), StandardCharsets.UTF_8));
+    //  FCS
+    Platform.runLater(() -> panelSentPacket.getChildren().add(new Label(
+        String.valueOf(packet.getFcs())
+    )));
   }
 
   private static boolean isStaffing(String source) {

@@ -1,7 +1,6 @@
 package com.github.moodtodie.term5_fcn.bytestuffing;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public class Packet {
   private static final byte[] FLAG = "#s".getBytes(StandardCharsets.UTF_8);
@@ -91,29 +90,5 @@ public class Packet {
     bytes[23] = fcs;
 
     return bytes;
-  }
-
-  @Override
-  public String toString() {
-    int src = this.src;
-    if (src < 0)
-      src += 256;
-    return "Package{" +
-        "flag=[" + new String(flag, StandardCharsets.UTF_8) +
-        "], dst=" + (dst != 0 ? (char) dst : "null") +
-        ", src=" + src +
-        ", data=[" + new String(data, StandardCharsets.UTF_8) +
-        "], fcs=" + (fcs != 0 ? (char) fcs : "null") +
-        "}";
-  }
-
-  public String getStruct() {
-    return "Packet{" +
-        "flag=" + Arrays.toString(flag) +
-        ", dst=" + dst +
-        ", src=" + src +
-        ", data=" + Arrays.toString(data) +
-        ", fcs=" + fcs +
-        '}';
   }
 }
