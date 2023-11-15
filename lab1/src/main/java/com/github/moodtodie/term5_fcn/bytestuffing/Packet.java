@@ -1,10 +1,11 @@
 package com.github.moodtodie.term5_fcn.bytestuffing;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class Packet {
   private static final byte[] FLAG = "#s".getBytes(StandardCharsets.UTF_8);
-  private static final byte ZERO = (byte) 0;  //  Destination Address & FCS
+  private static final byte ZERO = (byte) 0;  //  Destination Address
 
   private final byte[] flag = new byte[2];
   private byte dst;
@@ -13,7 +14,7 @@ public class Packet {
   private final byte[] data = new byte[19];
   private byte fcs;
 
-  public Packet(byte src, byte[] data) {
+  public Packet(byte src, byte[] data, byte fcs) {
     if (data.length < 19) {
       System.out.println("Error: Can't converting, data too long");
       return;
@@ -23,7 +24,7 @@ public class Packet {
     this.dst = ZERO;
     this.src = src;
     System.arraycopy(data, 0, this.data, 0, 19);
-    this.fcs = ZERO;
+    this.fcs = fcs;
   }
 
   public Packet(byte[] flag, byte dst, byte src, byte[] data, byte fcs) {
@@ -51,6 +52,10 @@ public class Packet {
     this.fcs = _package[23];
   }
 
+  public void setData(byte[] data) {
+    System.arraycopy(data, 0, this.data, 0, 19);
+  }
+
   public byte[] getFlag() {
     return flag;
   }
@@ -70,6 +75,8 @@ public class Packet {
   public byte getFcs() {
     return fcs;
   }
+
+
 
   public byte[] getBytes() {
     byte[] bytes = new byte[24];

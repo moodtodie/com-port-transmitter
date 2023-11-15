@@ -26,14 +26,22 @@ public class PortListener implements SerialPortEventListener {
 
         //  Unpacketing
         Packet packet = new Packet(buffer);
+        PortManager.setPacket(packet);
+
+        //  Check FCS
+        byte[] data = PortManager.fixData();
 
         //  Unstuffing
-        String massage = ByteStuffing.unstaffing(packet.getData());
+        String massage = ByteStuffing.unstaffing(data);
 
         //  Send text
         PortManager.addByteReceived(massage.getBytes(StandardCharsets.UTF_8).length);
         appendTextArea(massage);
       } catch (SerialPortException ex) {
+        System.out.println("Type: " + ex.getExceptionType() +
+            ", Method: " + ex.getMethodName() +
+            ", Port: " + ex.getPortName() +
+            ", Message: " + ex.getMessage());
         ex.printStackTrace();
       }
     }
