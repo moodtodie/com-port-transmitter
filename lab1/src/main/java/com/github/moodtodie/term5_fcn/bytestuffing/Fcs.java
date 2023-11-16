@@ -1,7 +1,7 @@
 package com.github.moodtodie.term5_fcn.bytestuffing;
 
 public class Fcs {
-  private final int POLY = 0x7;
+  private final int POLY = 0xE7;
   private final byte[] data;
   private byte fcs;
 
@@ -48,7 +48,7 @@ public class Fcs {
         }
       }
     }
-    return rem;
+    return rem & 0xFF;
   }
 
   private int crc8ErrorFinder(int num_bytes, int poly, int rem) {

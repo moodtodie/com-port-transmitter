@@ -104,8 +104,7 @@ public class Window extends Application {
     //  Data
     printData(new String(packet.getData(), StandardCharsets.UTF_8));
     //  FCS
-    Label l2 = new Label(String.valueOf(packet.getFcs()));
-    l2.setStyle(byteStyle);
+    Label l2 = new Label(String.format(" 0x%02X", packet.getFcs()));
     Platform.runLater(() -> panelSentPacket.getChildren().add(l2));
   }
 

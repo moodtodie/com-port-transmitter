@@ -28,8 +28,14 @@ public class PortListener implements SerialPortEventListener {
         Packet packet = new Packet(buffer);
         PortManager.setPacket(packet);
 
+        System.out.print("data before fix: ");
+        System.out.println(new String(packet.getData(), StandardCharsets.UTF_8));
+
         //  Check FCS
         byte[] data = PortManager.fixData();
+
+        System.out.print("data after fix: ");
+        System.out.println(new String(packet.getData(), StandardCharsets.UTF_8));
 
         //  Unstuffing
         String massage = ByteStuffing.unstaffing(data);
