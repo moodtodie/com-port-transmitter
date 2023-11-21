@@ -2,8 +2,8 @@ package com.github.moodtodie.term5_fcn.serial;
 
 import com.github.moodtodie.term5_fcn.GUI.Window;
 
-import com.github.moodtodie.term5_fcn.bytestuffing.Fcs;
-import com.github.moodtodie.term5_fcn.bytestuffing.Packet;
+import com.github.moodtodie.term5_fcn.service.Fcs;
+import com.github.moodtodie.term5_fcn.service.Packet;
 import jssc.SerialPortException;
 
 import java.nio.charset.StandardCharsets;

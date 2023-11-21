@@ -1,4 +1,4 @@
-package com.github.moodtodie.term5_fcn.bytestuffing;
+package com.github.moodtodie.term5_fcn.service;
 
 import java.nio.charset.StandardCharsets;
 

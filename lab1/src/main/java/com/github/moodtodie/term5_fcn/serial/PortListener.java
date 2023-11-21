@@ -1,8 +1,8 @@
 package com.github.moodtodie.term5_fcn.serial;
 
 import com.github.moodtodie.term5_fcn.GUI.Window;
-import com.github.moodtodie.term5_fcn.bytestuffing.ByteStuffing;
-import com.github.moodtodie.term5_fcn.bytestuffing.Packet;
+import com.github.moodtodie.term5_fcn.service.ByteStuffing;
+import com.github.moodtodie.term5_fcn.service.Packet;
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;

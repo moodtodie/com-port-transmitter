@@ -1,8 +1,8 @@
 package com.github.moodtodie.term5_fcn.GUI;
 
-import com.github.moodtodie.term5_fcn.bytestuffing.ByteStuffing;
-import com.github.moodtodie.term5_fcn.bytestuffing.Fcs;
-import com.github.moodtodie.term5_fcn.bytestuffing.Packet;
+import com.github.moodtodie.term5_fcn.service.ByteStuffing;
+import com.github.moodtodie.term5_fcn.service.Fcs;
+import com.github.moodtodie.term5_fcn.service.Packet;
 import com.github.moodtodie.term5_fcn.serial.PortManager;
 import com.github.moodtodie.term5_fcn.serial.Serial;
 import javafx.application.Application;

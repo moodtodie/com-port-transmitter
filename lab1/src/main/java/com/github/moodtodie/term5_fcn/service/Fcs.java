@@ -1,4 +1,4 @@
-package com.github.moodtodie.term5_fcn.bytestuffing;
+package com.github.moodtodie.term5_fcn.service;
 
 public class Fcs {
   private final int POLY = 0xE7;

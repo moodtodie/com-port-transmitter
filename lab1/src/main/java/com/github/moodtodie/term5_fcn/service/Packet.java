@@ -1,7 +1,6 @@
-package com.github.moodtodie.term5_fcn.bytestuffing;
+package com.github.moodtodie.term5_fcn.service;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public class Packet {
   private static final byte[] FLAG = "#s".getBytes(StandardCharsets.UTF_8);
