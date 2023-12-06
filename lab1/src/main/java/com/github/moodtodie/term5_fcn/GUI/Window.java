@@ -1,6 +1,7 @@
 package com.github.moodtodie.term5_fcn.GUI;
 
 import com.github.moodtodie.term5_fcn.service.ByteStuffing;
+import com.github.moodtodie.term5_fcn.service.CsmaCd;
 import com.github.moodtodie.term5_fcn.service.Fcs;
 import com.github.moodtodie.term5_fcn.service.Packet;
 import com.github.moodtodie.term5_fcn.serial.PortManager;
@@ -179,7 +180,8 @@ public class Window extends Application {
                 new Fcs(data).getFcs()
             );
             setLabelPacket(packet);
-            PortManager.getPort().write(packet.getBytes());
+            CsmaCd.sendPacket(packet.getBytes());
+//            PortManager.getPort().write(packet.getBytes());
           }
         } catch (SerialPortException e) {
           throw new RuntimeException(e);

@@ -2,6 +2,7 @@ package com.github.moodtodie.term5_fcn.serial;
 
 import com.github.moodtodie.term5_fcn.GUI.Window;
 import com.github.moodtodie.term5_fcn.service.ByteStuffing;
+import com.github.moodtodie.term5_fcn.service.CsmaCd;
 import com.github.moodtodie.term5_fcn.service.Packet;
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
@@ -23,6 +24,29 @@ public class PortListener implements SerialPortEventListener {
       try {
         //  Get data
         byte[] buffer = port.readBytes(event.getEventValue());
+
+        //  Check JAM signal
+        Thread jamThread = new Thread(() -> {
+          try {
+            waitJam();
+          } catch (SerialPortException e) {
+            throw new RuntimeException(e);
+          }
+        });
+
+        jamThread.start();
+
+        //  Delay for get JAM
+        try {
+          jamThread.join(1000); // Ожидаем завершения потока не более 1 секунд
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+
+        if (CsmaCd.jamWasReceived()) {
+          CsmaCd.jamReceived(false);
+          return;
+        }
 
         //  Unpacketing
         Packet packet = new Packet(buffer);
@@ -50,6 +74,16 @@ public class PortListener implements SerialPortEventListener {
             ", Message: " + ex.getMessage());
         ex.printStackTrace();
       }
+    }
+  }
+
+  private void waitJam() throws SerialPortException {
+    byte[] buffer = port.readBytes(1);
+
+    //  Check JAM signal
+    if (buffer != null && buffer[0] == CsmaCd.getJam()) {
+      System.out.println("warn: Get JAM signal");
+      CsmaCd.jamReceived(true);
     }
   }
 
